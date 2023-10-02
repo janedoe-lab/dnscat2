@@ -45,7 +45,7 @@ class Session
     :BLACKLIST => "Blacklisted agent name.",
   }
 
-  def initialize(id, main_window)
+  def initialize(id, main_window, source = '')
     @state = STATE_NEW
     @kill_reason = nil
     @their_seq = 0
@@ -61,7 +61,7 @@ class Session
     @crypto_state = '[cleartext]'
 
     # Source where connection came from
-    @source = ''
+    @source = source
 
     # Create this whether or not we're actually encrypting - it cleans up
     # the handler code
@@ -410,9 +410,7 @@ class Session
     end
   end
 
-  def _handle_incoming(data, max_length, source = "")
-    @source = source
-
+  def _handle_incoming(data, max_length)
     packet = Packet.parse(data, @options)
 
     if(Settings::GLOBAL.get("packet_trace"))
@@ -439,6 +437,8 @@ class Session
   end
 
   def feed(possibly_encrypted_data, max_length, source = '')
+    @source = source
+
     # Tell the window that we're still alive
     window.kick()
 
@@ -453,7 +453,7 @@ class Session
             max_length -= 8
           end
 
-          response_packet = _handle_incoming(data, max_length, source)
+          response_packet = _handle_incoming(data, max_length)
         rescue Session::SessionKiller => e
           # Kill it
           kill(e.message)

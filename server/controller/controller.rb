@@ -39,12 +39,12 @@ class Controller
     end
   end
 
-  def _get_or_create_session(id)
+  def _get_or_create_session(id, source)
     if(@sessions[id])
       return @sessions[id]
     end
 
-    return (@sessions[id] = Session.new(id, WINDOW))
+    return (@sessions[id] = Session.new(id, WINDOW, source))
   end
 
   def session_exists?(id)
@@ -91,7 +91,7 @@ class Controller
     end
 
     session_id = Packet.peek_session_id(data)
-    session = _get_or_create_session(session_id)
+    session = _get_or_create_session(session_id, source)
 
     return session.feed(data, max_length, source)
   end
