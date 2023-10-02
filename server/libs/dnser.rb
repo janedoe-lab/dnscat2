@@ -818,7 +818,11 @@ class DNSer
       end
 
       # Send the response
-      @s.send(@response.serialize(), 0, @host, @port)
+      begin
+        @s.send(@response.serialize(), 0, @host, @port)
+      rescue
+      end
+
       @sent = true
     end
   end
