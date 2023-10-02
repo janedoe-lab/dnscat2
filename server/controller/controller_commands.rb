@@ -49,6 +49,21 @@ module ControllerCommands
       end,
     )
 
+    @commander.register_command("use",
+      Trollop::Parser.new do
+        banner("Interact with a window. E.g. `use 15`")
+      end,
+
+      Proc.new do |opts, optarg|
+        if(optarg.length == 0)
+          WINDOW.puts("Usage: use 15")
+          next
+        end
+
+        WINDOW.fake_input("window -i %s" % [ optarg ])
+      end
+    )
+
     @commander.register_command("window",
       Trollop::Parser.new do
         banner("Interact with a window")
