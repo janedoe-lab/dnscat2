@@ -64,6 +64,40 @@ module ControllerCommands
       end
     )
 
+    @commander.register_command("cleanup",
+      Trollop::Parser.new do
+        banner("Cleanup old sessions.")
+      end,
+
+      Proc.new do |opts, optarg|
+        if(optarg.length == 0)
+          WINDOW.puts("Usage: cleanup [IDLE FOR SECONDS]. E.g. 'cleanup 3600'")
+          next
+        end
+
+        threshold = optarg.to_i
+
+        WINDOW.children() do |c|
+          if c.last_seen.nil?
+            next
+          end
+
+          elapsed = Time.now() - c.last_seen
+
+          session = find_session_by_window(c.id)
+          if(!session)
+            WINDOW.puts("Couldn't find window with id = #{c.id}")
+            next
+          end
+
+          if (elapsed > threshold) && ([Session::STATE_NEW, Session::STATE_ESTABLISHED].include? session.state)
+            WINDOW.puts("Session #{c.id} has been sent the kill signal!")
+            session.kill()
+          end
+        end
+      end
+    )
+
     @commander.register_command("window",
       Trollop::Parser.new do
         banner("Interact with a window")

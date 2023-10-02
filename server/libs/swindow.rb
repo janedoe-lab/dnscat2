@@ -390,6 +390,10 @@ class SWindow
     @last_seen = Time.now()
   end
 
+  def last_seen()
+    return @last_seen
+  end
+
   def to_s()
     s = "%s :: %s" % [@id.to_s(), @name]
     if(@@active == self)
