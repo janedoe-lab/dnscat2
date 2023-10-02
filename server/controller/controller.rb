@@ -78,21 +78,35 @@ class Controller
     return @sessions
   end
 
-  def feed(data, max_length, source)
+  def feed(data, max_length, source, question)
     # If it's a ping packet, handle it up here
     if(Packet.peek_type(data) == Packet::MESSAGE_TYPE_PING)
       WINDOW.puts("Responding to ping packet: #{Packet.parse(data).body}")
       return data
     end
 
+    packet_type = Packet.peek_type(data)
+
     if(!Packet.valid_type(data))
-      type = Packet.peek_type(data)
-      raise(DnscatException, "Unknown message type: 0x%x" % type)
+      raise(DnscatException, "Unknown message type: 0x%x" % packet_type)
     end
 
     session_id = Packet.peek_session_id(data)
+
+    if !@sessions[session_id] && !(packet_type == Packet::MESSAGE_TYPE_SYN || packet_type == Packet::MESSAGE_TYPE_ENC)
+      raise(DnscatException, "Received packet for unknown session #{session_id}, packet type #{packet_type}")
+    end
+
     session = _get_or_create_session(session_id, source)
 
-    return session.feed(data, max_length, source)
+    if session.state == Session::STATE_KILLED
+      raise(DnscatException, "Received packet for killed session #{session_id}")
+    end
+
+    if session.state != Session::STATE_ESTABLISHED && packet_type == Packet::MESSAGE_TYPE_MSG
+      raise(DnscatException, "Received message packet for non-established session #{session_id}")
+    end
+
+    return session.feed(data, max_length, source, question)
   end
 end

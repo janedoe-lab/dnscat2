@@ -56,6 +56,7 @@ class Session
     @incoming_data = ''
     @outgoing_data = ''
     @driver = nil
+    @question = nil
 
     # Stuff that's displayed after the window's name
     @crypto_state = '[cleartext]'
@@ -436,8 +437,12 @@ class Session
     return send(handler, packet, max_length)
   end
 
-  def feed(possibly_encrypted_data, max_length, source = '')
+  def feed(possibly_encrypted_data, max_length, source = '', question = nil)
     @source = source
+
+    if (question)
+      @question = "#{question}"
+    end
 
     # Tell the window that we're still alive
     window.kick()
@@ -456,7 +461,7 @@ class Session
           response_packet = _handle_incoming(data, max_length)
         rescue Session::SessionKiller => e
           # Kill it
-          kill(e.message)
+          kill(e.message + " (#{@question})")
 
           if (e.message != SESSION_KILL_MESSAGES[:BLACKLIST])
             # Respond with a FIN
@@ -469,7 +474,7 @@ class Session
           if(Settings::GLOBAL.get("verbose") == true)
             # Tell everybody
             @window.with({:to_ancestors => true}) do
-              @window.puts("An error occurred (see window #{@window.id} for stacktrace): #{e.message}")
+              @window.puts("An error occurred (see window #{@window.id} for stacktrace): #{e.message} (#{@question}")
             end
             @window.puts()
             @window.puts("If you think this might be a bug, please report this trace:")
@@ -489,7 +494,7 @@ class Session
           if(response_packet.nil?)
             window.puts("OUT: <no data>")
           else
-            window.puts("OUT: #{response_packet}")
+            window.puts("OUT: #{response_packet}\n#{@question}\n")
           end
         end
 
