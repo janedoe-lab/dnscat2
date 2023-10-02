@@ -378,9 +378,11 @@ class Session
     end
 
     if(!@encryptor.ready?())
-      @window.with({:to_ancestors => true}) do
-        @window.puts("Client attempted to connect with encryption disabled!")
-        @window.puts("If this was intentional, you can make encryption optional with 'set security=open'")
+      if(Settings::GLOBAL.get("verbose") == true)
+        @window.with({:to_ancestors => true}) do
+          @window.puts("Client attempted to connect with encryption disabled!")
+          @window.puts("If this was intentional, you can make encryption optional with 'set security=open'")
+        end
       end
 
       raise(Session::SessionKiller, "This server requires an encrypted connection!")
