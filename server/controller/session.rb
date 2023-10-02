@@ -94,7 +94,7 @@ class Session
           @driver.shutdown()
         end
       else
-        @window.puts("Session #{@window.id} killed (again): #{reason}")
+        # @window.puts("Session #{@window.id} killed (again): #{reason}")
       end
     end
   end
