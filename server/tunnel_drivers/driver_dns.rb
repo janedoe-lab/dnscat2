@@ -335,34 +335,40 @@ class DriverDNS
 
         transaction.reply!()
       rescue DNSer::DnsException => e
-        @window.with({:to_ancestors => true}) do
-          @window.puts("There was a problem parsing the incoming packet! (for more information, check window '#{@window.id}')")
-          @window.puts(e.inspect)
-        end
+        if(Settings::GLOBAL.get("verbose") == true)
+          @window.with({:to_ancestors => true}) do
+            @window.puts("There was a problem parsing the incoming packet! (for more information, check window '#{@window.id}')")
+            @window.puts(e.inspect)
+          end
 
-        e.backtrace.each do |bt|
-          @window.puts(bt)
+          e.backtrace.each do |bt|
+            @window.puts(bt)
+          end
         end
 
         transaction.error!(DNSer::Packet::RCODE_NAME_ERROR)
       rescue DnscatException => e
-        @window.with({:to_ancestors => true}) do
-          @window.puts("Protocol exception caught in dnscat DNS module (for more information, check window '#{@window.id}'):")
-          @window.puts(e.inspect)
-        end
+        if(Settings::GLOBAL.get("verbose") == true)
+          @window.with({:to_ancestors => true}) do
+            @window.puts("Protocol exception caught in dnscat DNS module (for more information, check window '#{@window.id}'):")
+            @window.puts(e.inspect)
+          end
 
-        e.backtrace.each do |bt|
-          @window.puts(bt)
+          e.backtrace.each do |bt|
+            @window.puts(bt)
+          end
         end
         transaction.error!(DNSer::Packet::RCODE_NAME_ERROR)
       rescue StandardError => e
-        @window.with({:to_ancestors => true}) do
-          @window.puts("Error caught (for more information, check window '#{@window.id}'):")
-          @window.puts(e.inspect)
-        end
+        if(Settings::GLOBAL.get("verbose") == true)
+          @window.with({:to_ancestors => true}) do
+            @window.puts("Error caught (for more information, check window '#{@window.id}'):")
+            @window.puts(e.inspect)
+          end
 
-        e.backtrace.each do |bt|
-          @window.puts(bt)
+          e.backtrace.each do |bt|
+            @window.puts(bt)
+          end
         end
         transaction.error!(DNSer::Packet::RCODE_NAME_ERROR)
       end
@@ -371,7 +377,9 @@ class DriverDNS
 
   def stop()
     if(@dnser.nil?)
-      @window.puts("Tried to kill a session that isn't started or that's already dead!")
+      if(Settings::GLOBAL.get("verbose") == true)
+        @window.puts("Tried to kill a session that isn't started or that's already dead!")
+      end
       return
     end
 

@@ -88,8 +88,10 @@ class Session
         @state = STATE_KILLED
         @kill_reason = reason
 
-        @window.with({:to_ancestors => true}) do
-          @window.puts("Session #{@window.id} killed: #{reason}")
+        if(Settings::GLOBAL.get("verbose") == true)
+          @window.with({:to_ancestors => true}) do
+            @window.puts("Session #{@window.id} killed: #{reason}")
+          end
         end
 
         # Close window/drive only first time
@@ -98,7 +100,9 @@ class Session
           @driver.shutdown()
         end
       else
-        # @window.puts("Session #{@window.id} killed (again): #{reason}")
+        if(Settings::GLOBAL.get("verbose") == true)
+          @window.puts("Session #{@window.id} killed (again): #{reason}")
+        end
       end
     end
   end
@@ -247,7 +251,9 @@ class Session
 
     # Validate the sequence number
     if(@their_seq != packet.body.seq)
-      @window.puts("Client sent a bad sequence number (expected #{@their_seq}, received #{packet.body.seq}); re-sending")
+      if(Settings::GLOBAL.get("verbose") == true)
+        @window.puts("Client sent a bad sequence number (expected #{@their_seq}, received #{packet.body.seq}); re-sending")
+      end
 
       # Re-send the last packet
       old_data = _next_outgoing(_actual_msg_max_length(max_length))
@@ -453,15 +459,17 @@ class Session
             })
           end
         rescue DnscatException => e
-          # Tell everybody
-          @window.with({:to_ancestors => true}) do
-            @window.puts("An error occurred (see window #{@window.id} for stacktrace): #{e.message}")
-          end
-          @window.puts()
-          @window.puts("If you think this might be a bug, please report this trace:")
-          @window.puts(e.inspect)
-          e.backtrace.each do |bt|
-            @window.puts(bt)
+          if(Settings::GLOBAL.get("verbose") == true)
+            # Tell everybody
+            @window.with({:to_ancestors => true}) do
+              @window.puts("An error occurred (see window #{@window.id} for stacktrace): #{e.message}")
+            end
+            @window.puts()
+            @window.puts("If you think this might be a bug, please report this trace:")
+            @window.puts(e.inspect)
+            e.backtrace.each do |bt|
+              @window.puts(bt)
+            end
           end
 
           # Don't respond

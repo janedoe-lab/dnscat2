@@ -861,7 +861,9 @@ class DNSer
               # Verify it deeper (for security reasons)
               if(!cached.nil?)
                 if(request == cached[:request])
-                  puts("CACHE HIT")
+                  if(Settings::GLOBAL.get("verbose") == true)
+                    puts("CACHE HIT")
+                  end
                   transaction.reply!(cached[:response])
                 end
               end

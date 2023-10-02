@@ -141,6 +141,8 @@ class Settings
     if(@settings[name].nil?)
       if(allow_recursion)
         return GLOBAL.get(name, false)
+      else 
+        return false
       end
     end
 

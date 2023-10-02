@@ -47,6 +47,7 @@
 require 'readline'
 
 require 'libs/ring_buffer'
+require 'libs/settings'
 
 class SWindow
   attr_accessor :prompt, :name, :noinput
@@ -155,7 +156,7 @@ class SWindow
       self.activate()
     end
 
-    if(params[:quiet] != true)
+    if(params[:quiet] != true && Settings::GLOBAL.get("verbose") == true)
       target = @parent ? @parent : self
       target.with({:to_descendants => true, :to_ancestors => true}) do
         target.puts("New window created: %s" % @id.to_s())

@@ -96,8 +96,12 @@ opts = Trollop::options do
   opt :cache,          "If set, caching is enabled on the server.",
     :type => :boolean, :default => true
 
-  opt :blacklist,      "Agent names blacklist, semicolumn separated",
+  opt :blacklist,      "Agent names blacklist, semicolon separated",
     :type => :string,  :default => ""
+
+  opt :verbose,       "If set, will print extra messages useful for debugging.",
+    :type => :boolean, :default => false
+
 end
 
 SWindow.set_firehose(opts[:firehose])
@@ -185,8 +189,13 @@ begin
   Settings::GLOBAL.create("secret", Settings::TYPE_STRING, opts[:secret], "Pass the same --secret value to the client and the server for extra security") do |old_val, new_val|
   end
 
-  Settings::GLOBAL.create("blacklist", Settings::TYPE_STRING, opts[:blacklist], "Semicolumn-separated list of blacklisted agent names") do |old_val, new_val|
+  Settings::GLOBAL.create("blacklist", Settings::TYPE_STRING, opts[:blacklist], "Semicolon-separated list of blacklisted agent names") do |old_val, new_val|
   end
+
+  Settings::GLOBAL.create("verbose", Settings::TYPE_BOOLEAN, opts[:verbose], "If set, will print extra messages useful for debugging.") do |old_val, new_val|
+    WINDOW.puts("verbose => #{new_val}")
+  end
+
 rescue Settings::ValidationError => e
   WINDOW.puts("There was an error with one of your commandline arguments:")
   WINDOW.puts(e)
