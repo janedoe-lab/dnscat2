@@ -406,7 +406,11 @@ class SWindow
     end
 
     if(@times_out)
-      elapsed = Time.now() - @last_seen
+      if(@last_seen.nil?)
+        elapsed = 9999
+      else
+        elapsed = Time.now() - @last_seen
+      end
       if(elapsed > 5)
         s += " [idle for #{elapsed.to_i()} seconds]"
       end
