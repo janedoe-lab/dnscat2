@@ -303,6 +303,8 @@ class DriverDNS
         host = transaction.instance_variable_get(:@host)
         @window.puts("Received:  #{question.name} (#{question.type_s}) from #{host}")
 
+        _, domain_name = DriverDNS.figure_out_name(question.name, domains)
+
         name = DriverDNS.packet_to_bytes(question, domains)
         if(name.nil?)
           do_passthrough(transaction)
@@ -316,7 +318,7 @@ class DriverDNS
         end
 
         # Get the response
-        response = block.call(name, max_length)
+        response = block.call(name, max_length, ":: #{domain_name} (#{question.type_s}) via #{host}")
 
         if(response.length > max_length)
           raise(DnscatException, "The handler returned too much data! This shouldn't happen, please report. (max = #{max_length}, returned = #{response.length}")

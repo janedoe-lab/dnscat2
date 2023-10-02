@@ -78,7 +78,7 @@ class Controller
     return @sessions
   end
 
-  def feed(data, max_length)
+  def feed(data, max_length, source)
     # If it's a ping packet, handle it up here
     if(Packet.peek_type(data) == Packet::MESSAGE_TYPE_PING)
       WINDOW.puts("Responding to ping packet: #{Packet.parse(data).body}")
@@ -93,6 +93,6 @@ class Controller
     session_id = Packet.peek_session_id(data)
     session = _get_or_create_session(session_id)
 
-    return session.feed(data, max_length)
+    return session.feed(data, max_length, source)
   end
 end

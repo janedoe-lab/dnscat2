@@ -60,6 +60,9 @@ class Session
     # Stuff that's displayed after the window's name
     @crypto_state = '[cleartext]'
 
+    # Source where connection came from
+    @source = ''
+
     # Create this whether or not we're actually encrypting - it cleans up
     # the handler code
     @encryptor = Encryptor.new(Settings::GLOBAL.get('secret'))
@@ -72,7 +75,7 @@ class Session
     end
 
     @settings.create("name", Settings::TYPE_NO_STRIP, "(not set)", "Change the name of the window, and how it's displayed on the 'windows' list; this implicitly changes the prompt as well.") do |old_val, new_val|
-      @window.name = new_val + ' ' + @crypto_state
+      @window.name = new_val + ' ' + @crypto_state + ' ' + @source
       @settings.set("prompt", "%s %d> " % [new_val, @window.id])
     end
 
@@ -407,7 +410,9 @@ class Session
     end
   end
 
-  def _handle_incoming(data, max_length)
+  def _handle_incoming(data, max_length, source = "")
+    @source = source
+
     packet = Packet.parse(data, @options)
 
     if(Settings::GLOBAL.get("packet_trace"))
@@ -433,7 +438,7 @@ class Session
     return send(handler, packet, max_length)
   end
 
-  def feed(possibly_encrypted_data, max_length)
+  def feed(possibly_encrypted_data, max_length, source = '')
     # Tell the window that we're still alive
     window.kick()
 
@@ -448,7 +453,7 @@ class Session
             max_length -= 8
           end
 
-          response_packet = _handle_incoming(data, max_length)
+          response_packet = _handle_incoming(data, max_length, source)
         rescue Session::SessionKiller => e
           # Kill it
           kill(e.message)

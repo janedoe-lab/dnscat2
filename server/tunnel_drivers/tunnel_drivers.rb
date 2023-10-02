@@ -21,8 +21,8 @@ class TunnelDrivers
     end
 
     begin
-      driver = driver_cls.new(WINDOW, *args) do |data, max_length|
-        controller.feed(data, max_length)
+      driver = driver_cls.new(WINDOW, *args) do |data, max_length, source|
+        controller.feed(data, max_length, source)
       end
       @@drivers[driver.id] = driver
     rescue Errno::EACCES => e
