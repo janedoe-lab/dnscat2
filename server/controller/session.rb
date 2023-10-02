@@ -87,14 +87,15 @@ class Session
         @window.with({:to_ancestors => true}) do
           @window.puts("Session #{@window.id} killed: #{reason}")
         end
+
+        # Close window/drive only first time
+        @window.close()
+        if(@driver)
+          @driver.shutdown()
+        end
       else
         @window.puts("Session #{@window.id} killed (again): #{reason}")
       end
-    end
-
-    @window.close()
-    if(@driver)
-      @driver.shutdown()
     end
   end
 
