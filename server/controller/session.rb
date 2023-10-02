@@ -183,7 +183,7 @@ class Session
     end
 
     # Feed the auto_command into the window, as if it was user input
-    if(auto_command = Settings::GLOBAL.get("auto_command"))
+    if((@options & Packet::OPT_COMMAND) == Packet::OPT_COMMAND && auto_command = Settings::GLOBAL.get("auto_command"))
       auto_command.split(";").each do |command|
         command = command.strip()
         window.fake_input(command)
