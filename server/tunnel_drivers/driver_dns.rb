@@ -191,7 +191,7 @@ class DriverDNS
 
     type_info = RECORD_TYPES[question.type]
     if(type_info.nil?)
-      raise(DnscatException, "Couldn't figure out how to handle the record type! (please report this, it shouldn't happen): " + type)
+      raise(DnscatException, "Couldn't figure out how to handle the record type! (please report this, it shouldn't happen): " + type_info)
     end
 
     # Figure out the length of the domain based on the record type
