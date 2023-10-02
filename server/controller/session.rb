@@ -41,6 +41,10 @@ class Session
     Packet::MESSAGE_TYPE_ENC => :_handle_enc,
   }
 
+  SESSION_KILL_MESSAGES = {
+    :BLACKLIST => "Blacklisted agent name.",
+  }
+
   def initialize(id, main_window)
     @state = STATE_NEW
     @kill_reason = nil
@@ -160,6 +164,23 @@ class Session
     @their_seq = packet.body.seq
     @options   = packet.body.options
 
+    if((@options & Packet::OPT_NAME) == Packet::OPT_NAME)
+      agent_name = packet.body.name
+
+      # Check blacklisted names
+      if(blacklist = Settings::GLOBAL.get("blacklist"))
+        blacklist.split(";").each do |blacklist_entry|
+          if (agent_name =~ /#{blacklist_entry}/i)
+            raise(Session::SessionKiller, SESSION_KILL_MESSAGES[:BLACKLIST])
+          end
+        end
+      end
+
+      @settings.set("name", agent_name)
+    else
+      @settings.set("name", "unnamed")
+    end
+
     # TODO: We're going to need different driver types
     if((@options & Packet::OPT_COMMAND) == Packet::OPT_COMMAND)
       @driver = DriverCommand.new(@window, @settings)
@@ -170,12 +191,6 @@ class Session
       else
         @driver = DriverProcess.new(@window, @settings, process)
       end
-    end
-
-    if((@options & Packet::OPT_NAME) == Packet::OPT_NAME)
-      @settings.set("name", packet.body.name)
-    else
-      @settings.set("name", "unnamed")
     end
 
     if(Settings::GLOBAL.get("auto_attach"))
@@ -430,11 +445,13 @@ class Session
           # Kill it
           kill(e.message)
 
-          # Respond with a FIN
-          response_packet = Packet.create_fin(@options, {
-            :session_id => @id,
-            :reason => "Session killed: #{e.message}",
-          })
+          if (e.message != SESSION_KILL_MESSAGES[:BLACKLIST])
+            # Respond with a FIN
+            response_packet = Packet.create_fin(@options, {
+              :session_id => @id,
+              :reason => "Session killed: #{e.message}",
+            })
+          end
         rescue DnscatException => e
           # Tell everybody
           @window.with({:to_ancestors => true}) do

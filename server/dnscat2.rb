@@ -76,7 +76,7 @@ opts = Trollop::options do
 
   opt :auto_command,   "Send this to each client that connects",
     :type => :string,  :default => ""
-  opt :auto_script,   "Run this script for each client that connects",
+  opt :auto_script,    "Run this script for each client that connects",
     :type => :string,  :default => ""
   opt :auto_attach,    "Automatically attach to new sessions",
     :type => :boolean, :default => false
@@ -93,8 +93,11 @@ opts = Trollop::options do
   opt :firehose,       "If set, all output goes to stdout instead of being put in windows.",
     :type => :boolean, :default => false
 
-  opt :cache,       "If set, caching is enabled on the server.",
+  opt :cache,          "If set, caching is enabled on the server.",
     :type => :boolean, :default => true
+
+  opt :blacklist,      "Agent names blacklist, semicolumn separated",
+    :type => :string,  :default => ""
 end
 
 SWindow.set_firehose(opts[:firehose])
@@ -180,6 +183,9 @@ begin
   end
 
   Settings::GLOBAL.create("secret", Settings::TYPE_STRING, opts[:secret], "Pass the same --secret value to the client and the server for extra security") do |old_val, new_val|
+  end
+
+  Settings::GLOBAL.create("blacklist", Settings::TYPE_STRING, opts[:blacklist], "Semicolumn-separated list of blacklisted agent names") do |old_val, new_val|
   end
 rescue Settings::ValidationError => e
   WINDOW.puts("There was an error with one of your commandline arguments:")
