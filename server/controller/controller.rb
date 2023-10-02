@@ -85,6 +85,11 @@ class Controller
       return data
     end
 
+    if(!Packet.valid_type(data))
+      type = Packet.peek_type(data)
+      raise(DnscatException, "Unknown message type: 0x%x" % type)
+    end
+
     session_id = Packet.peek_session_id(data)
     session = _get_or_create_session(session_id)
 

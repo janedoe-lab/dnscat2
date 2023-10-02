@@ -584,7 +584,9 @@ class DNSer
           when TYPE_AAAA
             rr = AAAA.parse(data)
           else
-            puts("Warning: Unknown record type: #{type}")
+            if(Settings::GLOBAL.get("verbose") == true)
+              puts("Warning: Unknown record type: #{type}")
+            end
             rr = RRUnknown.parse(type, data, rr_length)
           end
         end
@@ -789,7 +791,7 @@ class DNSer
         # If there was a timeout, handle it
         if(response.nil?)
           response = @response
-          response.rcode = DNSer::Packet::RCODE_SERVER_FAILURE
+          response.rcode = DNSer::Packet::RCODE_NAME_ERROR
         end
 
         response.trn_id = @request.trn_id
@@ -805,7 +807,7 @@ class DNSer
     end
 
     def reply!(_="")
-      raise ArgumentError("Already sent!") if(@sent)
+      raise(ArgumentError, "Already sent!") if(@sent)
 
       # Cache it if we have a cache
       if(@cache)
@@ -832,6 +834,9 @@ class DNSer
     if(cache)
       @cache = Vash.new()
     end
+
+    # create names cache
+    @names_cache = Vash.new()
   end
 
   # This method returns immediately, but spawns a background thread. The thread
@@ -842,13 +847,43 @@ class DNSer
       begin
         loop do
           data = @s.recvfrom(65536)
-          
-          begin   
+
+          begin
             # Data is an array where the first element is the actual data, and the second is the host/port
             request = DNSer::Packet.parse(data[0])
 
             # Create a transaction object, which we can use to respond
             transaction = Transaction.new(@s, request, data[1][3], data[1][1], @cache)
+
+            if (request.questions.length > 0)
+              name = request.questions[0].name
+              type = request.questions[0].type_s
+
+              if (!name.nil?)
+                # See if we already seen this name before
+                prev_transaction = @names_cache[name]
+
+                #if (prev_transaction.nil?)
+                if (true)
+                    @names_cache[name, 10] = transaction
+                else
+                  if(prev_transaction.request.questions.length>0)
+                    prev_question_type = prev_transaction.request.questions[0].type_s
+
+                    # If previously seen name was requested with a different record type - return error
+                    if(prev_question_type != type)
+                      if(Settings::GLOBAL.get("verbose") == true)
+                        host = transaction.instance_variable_get(:@host)
+                        puts("Already seen:  #{name} (#{type}) from #{host} with original type #{prev_question_type}")
+                      end
+
+                      transaction.error!(DNSer::Packet::RCODE_NAME_ERROR)
+                      @cache.clear(transaction.request.trn_id)
+                    end
+                  end
+                end
+              end
+            end
 
             # If caching is enabled, deal with it
             if(@cache)
@@ -873,14 +908,21 @@ class DNSer
               begin
                 block.call(transaction)
               rescue StandardError => e
-                puts("Caught an error: #{e}")
-                puts(e.backtrace())
-                transaction.reply!(transaction.response_template({:rcode => DNSer::Packet::RCODE_SERVER_FAILURE}))
+                if(Settings::GLOBAL.get("verbose") == true)
+                  puts("Caught an error: #{e}")
+                  puts(e.backtrace())
+                end
+                transaction.error!(DNSer::Packet::RCODE_NAME_ERROR)
               end
             end
           rescue StandardError => e
-            puts("Caught an error: #{e}")
-            puts(e.backtrace())
+            if(Settings::GLOBAL.get("verbose") == true)
+              puts("Caught an error: #{e}")
+              puts(e.backtrace())
+            end
+            if(!transaction.nil? && !transaction.sent)
+              transaction.error!(DNSer::Packet::RCODE_NAME_ERROR)
+            end
           end
         end
       ensure

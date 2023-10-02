@@ -338,6 +338,16 @@ class Packet
     return type
   end
 
+  def Packet.valid_type(data)
+    type = Packet.peek_type(data)
+
+    return type == MESSAGE_TYPE_ENC ||
+           type == MESSAGE_TYPE_FIN ||
+           type == MESSAGE_TYPE_MSG ||
+           type == MESSAGE_TYPE_PING ||
+           type == MESSAGE_TYPE_SYN
+  end
+
   def Packet.parse(data, options = nil)
     packet_id, type, session_id, data = Packet.parse_header(data)
 

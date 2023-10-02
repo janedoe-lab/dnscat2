@@ -147,17 +147,19 @@ class DriverDNS
       @window.puts("Unknown request for '#{question ? question : '<unknown>'}', passing to #{@@passthrough[:host]}:#{@@passthrough[:port]}")
 
       transaction.passthrough!(@@passthrough[:host], @@passthrough[:port])
-    elsif(!@shown_pt)
-      @window.puts("Unable to handle request, returning an error: #{question.name}")
-      @window.puts("(If you want to pass to upstream DNS servers, use --passthrough")
-      @window.puts("or run \"set passthrough=8.8.8.8:53\")")
-      @window.puts("(This will only be shown once)")
-      @shown_pt = true
+    else
+      if(!@shown_pt)
+        @window.puts("Unable to handle request, returning an error: #{question.name}")
+        @window.puts("(If you want to pass to upstream DNS servers, use --passthrough")
+        @window.puts("or run \"set passthrough=8.8.8.8:53\")")
+        @window.puts("(This will only be shown once)")
+        @shown_pt = true
+      else
+        @shown_pt = true
+      end
 
       transaction.error!(DNSer::Packet::RCODE_NAME_ERROR)
     end
-
-    @shown_pt = true
   end
 
   def DriverDNS.packet_to_bytes(question, domains)
@@ -298,7 +300,8 @@ class DriverDNS
         end
 
         question = request.questions[0]
-        @window.puts("Received:  #{question.name} (#{question.type_s})")
+        host = transaction.instance_variable_get(:@host)
+        @window.puts("Received:  #{question.name} (#{question.type_s}) from #{host}")
 
         name = DriverDNS.packet_to_bytes(question, domains)
         if(name.nil?)
